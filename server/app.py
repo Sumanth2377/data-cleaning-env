@@ -331,11 +331,11 @@ async def grade() -> Dict[str, Any]:
 # Entry point
 # ============================================================================
 
-def run() -> None:
+def main() -> None:
     """Entry point for the command-line script."""
     import uvicorn
     port = int(os.getenv("PORT", "7860"))
     uvicorn.run("server.app:app", host="0.0.0.0", port=port, reload=False)
 
 if __name__ == "__main__":
-    run()
+    main()
