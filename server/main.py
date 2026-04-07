@@ -3,6 +3,7 @@ FastAPI server for the Data Cleaning OpenEnv environment.
 
 Endpoints
 ---------
+GET  /                   — Redirects to interactive API docs
 POST /reset              — Start a new episode
 POST /step               — Apply a cleaning action
 GET  /state              — Inspect current state (read-only)
@@ -187,9 +188,13 @@ ACTION_DOCS: Dict[str, Dict[str, Any]] = {
 }
 
 
-# ============================================================================
-# Routes
-# ============================================================================
+from fastapi.responses import RedirectResponse
+
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root to interactive API documentation."""
+    return RedirectResponse(url="/docs")
+
 
 @app.get("/health", tags=["System"])
 async def health() -> Dict[str, str]:
