@@ -1,0 +1,161 @@
+name: data-cleaning-env
+version: 1.0.0
+description: >
+  A real-world AI Data Cleaning & Preprocessing environment where agents learn
+  to identify and fix data quality issues across three difficulty levels.
+  Covers missing values, type mismatches, format violations, duplicate records,
+  referential integrity violations, and statistical outliers. The environment
+  rewards partial progress at every step — not just final outcomes.
+author: Suman Karmakar
+homepage: https://huggingface.co/spaces/suman-kar/data-cleaning-env
+tags:
+  - data-cleaning
+  - preprocessing
+  - tabular-data
+  - real-world
+  - csv
+  - schema-validation
+  - data-quality
+
+tasks:
+  - name: csv-doctor
+    description: >
+      Fix obvious data quality issues in a 200-row customer dataset.
+      Issues include missing values in age/salary/email columns, salary stored
+      as a currency string (e.g. "$45,000"), duplicate rows, and inconsistently
+      cased names. Agent must use the right combination of actions to maximise
+      the data quality score.
+    difficulty: easy
+    max_steps: 15
+    reward_threshold: 0.75
+
+  - name: schema-enforcer
+    description: >
+      Conform a 300-row contacts dataset to a strict target schema.
+      Phone numbers appear in 5 different formats, dates in 4 different formats,
+      emails have mixed casing and leading/trailing whitespace, and zip codes
+      occasionally include the +4 suffix. The agent must normalise every column
+      to exactly match the target schema.
+    difficulty: medium
+    max_steps: 20
+    reward_threshold: 0.70
+
+  - name: pipeline-debugger
+    description: >
+      Repair a two-table dataset (orders + customers) with complex quality issues:
+      foreign-key violations (orders referencing non-existent customers),
+      statistical outliers in price and quantity columns, implicit duplicate
+      records across tables, and missing enrichment columns obtainable via a
+      table merge. Success is measured by data integrity metrics AND by the
+      improvement in a downstream scikit-learn regression model's R² score.
+    difficulty: hard
+    max_steps: 30
+    reward_threshold: 0.60
+
+observation_space:
+  type: object
+  description: Rich view of the current dataset state
+  properties:
+    task_name:
+      type: string
+      description: Identifier of the active task
+    task_description:
+      type: string
+      description: Natural-language description of the objective
+    dataset_id:
+      type: string
+      description: Unique episode identifier
+    step_count:
+      type: integer
+      description: Number of steps taken so far
+    columns:
+      type: array
+      description: Per-column statistics and detected issues
+      items:
+        type: object
+        properties:
+          name: {type: string}
+          dtype: {type: string}
+          null_count: {type: integer}
+          null_pct: {type: number}
+          unique_count: {type: integer}
+          sample_values: {type: array}
+          detected_issues: {type: array, items: {type: string}}
+    stats:
+      type: object
+      description: Dataset-level quality statistics
+      properties:
+        total_rows: {type: integer}
+        total_cols: {type: integer}
+        missing_cells: {type: integer}
+        missing_pct: {type: number}
+        duplicate_rows: {type: integer}
+        dtype_issues: {type: integer}
+        format_violations: {type: integer}
+    issues:
+      type: array
+      description: List of detected data quality issues
+      items:
+        type: object
+        properties:
+          issue_type: {type: string}
+          column: {type: string}
+          severity: {type: string, enum: [low, medium, high]}
+          description: {type: string}
+          affected_rows: {type: integer}
+    actions_history:
+      type: array
+      description: Ordered list of actions taken this episode
+      items: {type: string}
+    target_schema:
+      type: object
+      description: Target schema definition (medium task only)
+      nullable: true
+    auxiliary_datasets:
+      type: object
+      description: Additional tables (hard task only)
+      nullable: true
+    current_score:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Running quality score
+    max_steps:
+      type: integer
+      description: Maximum allowed steps for this episode
+
+action_space:
+  type: object
+  description: Data cleaning operation to apply
+  properties:
+    action_type:
+      type: string
+      enum:
+        - fill_missing
+        - drop_duplicates
+        - cast_column
+        - rename_column
+        - normalize_format
+        - apply_regex
+        - drop_column
+        - drop_rows_by_condition
+        - clip_outliers
+        - standardize_text
+        - fix_referential_integrity
+        - merge_tables
+    parameters:
+      type: object
+      description: Action-specific keyword arguments
+
+reward_range: [0.0, 1.0]
+reward_description: >
+  Reward is shaped at every step (non-sparse). Each action returns a reward
+  proportional to its measured improvement in data quality:
+    completeness_delta  (weight 0.30) — reduction in null cells
+    consistency_delta   (weight 0.30) — dtype/format correctness improvement
+    validity_delta      (weight 0.20) — constraint satisfaction improvement
+    efficiency_bonus    (weight 0.10) — reward for impactful actions
+    downstream_delta    (weight 0.10, hard task only) — ML accuracy improvement
+  Penalties:
+    -0.10 per step that removes >30% of remaining rows (destructive)
+    -0.005 per step (efficiency cost)
