@@ -35,10 +35,9 @@ from environment.models import DataCleaningAction, DataCleaningObservation
 # ============================================================================
 # Configuration
 # ============================================================================
-
-API_KEY: str = os.getenv("HF_TOKEN") or os.getenv("API_KEY") or "hf_placeholder"
 API_BASE_URL: str = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME: str = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+HF_TOKEN = os.getenv("HF_TOKEN")
 BENCHMARK: str = "data-cleaning-env"
 
 # Which tasks to run (comma-separated list, or 'all')
@@ -424,7 +423,7 @@ def run_task(
 def main() -> None:
     # Build OpenAI client (pointing to HF Inference Router or custom endpoint)
     try:
-        client: Optional[OpenAI] = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+        client: Optional[OpenAI] = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
         # Quick connectivity test
         client.models.list()
     except Exception as exc:
