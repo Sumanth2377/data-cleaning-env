@@ -197,8 +197,8 @@ git clone https://huggingface.co/spaces/suman-kar/data-cleaning-env
 cd data-cleaning-env
 pip install -r requirements.txt
 
-# 2. Start the server
-uvicorn server.main:app --host 0.0.0.0 --port 7860
+# 2. Run the Local Validation Server
+uvicorn server.app:app --host 0.0.0.0 --port 7860
 
 # 3. Test it
 curl -X POST http://localhost:7860/reset \
